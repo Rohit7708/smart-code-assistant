@@ -1,0 +1,139 @@
+Personal Coding Assistant - Project Overview
+=========================================
+
+1. What we built
+----------------
+We created a modern web-based coding assistant that combines a Next.js frontend, a local AI backend, and repository-aware retrieval. The app gives you a chat-style interface for asking questions about the current project, receiving helpful answers, and exploring the codebase in a more grounded way.
+
+This prototype is designed as a practical foundation for a future personal coding assistant that can understand a repository, explain architecture, inspect files, and support engineering workflows.
+
+2. Main architecture
+-------------------
+Frontend:
+- Built with Next.js and React
+- Uses Tailwind CSS for the visual design and layout
+- Provides a chat interface with markdown-rendered responses and syntax-highlighted code blocks
+- Keeps chat history in the browser session so the conversation feels natural
+
+Backend:
+- Exposes a Next.js API route at /api/chat
+- Sends the latest user message and prior conversation to the LLM
+- Uses Ollama instead of OpenAI so the assistant can run locally without an API key
+- Pulls repository context from local files before generating a reply
+
+3. Core concepts we implemented
+-------------------------------
+A. Chat UI
+The chat experience is the main entry point. It lets the user:
+- Write prompts in a message box
+- See assistant replies in a conversational thread
+- Read formatted markdown output
+- View code blocks with highlighting
+
+This is the front-facing experience that makes the assistant feel like a usable coding tool.
+
+B. API route and request flow
+The /api/chat endpoint is the bridge between the frontend and the model. When the user submits a message, the request is sent to the server, which then:
+- Reads the message history
+- Extracts the latest question
+- Builds a more informative prompt
+- Sends it to the local LLM
+- Returns the response back to the browser
+
+C. Repository-aware prompting
+A major improvement is that the assistant is not only answering from general knowledge. It also looks at the current repository and gathers relevant code snippets. This helps the model answer questions like:
+- What does this project do?
+- How is the chat route implemented?
+- Which files define the UI?
+- What is the folder structure of the app?
+
+This is a simple form of retrieval-augmented generation, or RAG.
+
+D. Retrieval and chunking
+The repository context layer scans files, chunks them into smaller parts, and scores them by relevance. The idea is to avoid sending the entire codebase to the model. Instead, the assistant sends only the most relevant pieces.
+
+E. Tool-based repository inspection
+We also added a lightweight tool layer that can inspect the workspace by:
+- Listing directories
+- Reading files
+
+That gives the assistant a more grounded way to answer questions about repository structure and file contents.
+
+4. End-to-end flow
+------------------
+1. The user opens the app in the browser.
+2. The user enters a prompt such as "Explain the chat route" or "List the project files".
+3. The frontend sends the message history to /api/chat.
+4. The server extracts the latest user question.
+5. The repository context layer scans the workspace and chooses the most relevant file chunks.
+6. The server builds an enriched prompt that includes:
+   - the chat history
+   - repository context
+   - optional tool instructions
+7. The prompt is sent to Ollama running locally.
+8. Ollama returns a response.
+9. The frontend displays the assistant answer in the chat window with markdown formatting.
+
+5. Why repository context matters
+----------------------------------
+Without repository context, the assistant would answer in a generic or superficial manner. With repository context, it becomes much more useful because it can reference the structure and content of the actual project.
+
+This is important because software development questions are often specific to one repository. A useful coding assistant should not just talk generally about coding—it should understand the codebase you are currently working in.
+
+6. What we implemented so far
+------------------------------
+Phase 1 - Chat UI
+- Built a polished chat experience
+- Added markdown support
+- Added syntax highlighting for code blocks
+- Added conversational history and status messaging
+
+Phase 2 - Repository-aware responses
+- Indexed repository files into smaller chunks
+- Ranked those chunks by relevance
+- Passed relevant context to the language model
+
+Phase 3 - Tool-based repository exploration
+- Added lightweight file and directory inspection support
+- Allowed the assistant to reason about repository structure more concretely
+
+7. Why Ollama was chosen
+------------------------
+Ollama is a strong fit for this project because it:
+- Runs locally on the machine
+- Does not require an API key
+- Works well for local development
+- Lets you use open-source models without sending data to third-party services
+
+This makes it ideal for building a private, local-first coding assistant prototype.
+
+8. How to run the app locally
+-----------------------------
+1. Install Ollama from https://ollama.com
+2. Pull a model such as:
+   - ollama pull llama3.2
+3. In the project folder, install dependencies:
+   - npm install
+4. Start the development server:
+   - npm run dev
+5. Open the app in the browser at http://localhost:3000
+6. Ask questions about the current repository
+
+9. Future roadmap
+----------------
+The next milestones can include:
+- Persistent vector storage for larger repositories
+- More advanced tool calling and action execution
+- Git-aware assistance for code review and debugging
+- Memory for user preferences and coding style
+- Multi-agent workflows for tests, review, and bug fixing
+
+10. Summary
+-----------
+We built a practical personal coding assistant prototype that combines:
+- a polished chat frontend
+- a local LLM backend via Ollama
+- repository-aware context retrieval
+- lightweight file and folder inspection
+
+This gives you a strong starting point for a more capable developer assistant over time.
