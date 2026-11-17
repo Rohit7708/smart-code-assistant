@@ -1,0 +1,115 @@
+{
+  "name": "personal-coding-assistant",
+  "displayName": "Personal Coding Assistant",
+  "description": "Chat with your local coding assistant (Next.js + Ollama) from inside VS Code.",
+  "version": "0.0.1",
+  "publisher": "rohit",
+  "private": true,
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "AI",
+    "Chat"
+  ],
+  "main": "./out/extension.js",
+  "activationEvents": [],
+  "contributes": {
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "codingAssistant",
+          "title": "Coding Assistant",
+          "icon": "media/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "codingAssistant": [
+        {
+          "type": "webview",
+          "id": "codingAssistant.chat",
+          "name": "Chat"
+        }
+      ]
+    },
+    "commands": [
+      {
+        "command": "codingAssistant.explainSelection",
+        "title": "Explain Selection",
+        "category": "Coding Assistant"
+      },
+      {
+        "command": "codingAssistant.fixSelection",
+        "title": "Fix Selection",
+        "category": "Coding Assistant"
+      },
+      {
+        "command": "codingAssistant.askAboutFile",
+        "title": "Ask About This File…",
+        "category": "Coding Assistant"
+      },
+      {
+        "command": "codingAssistant.clearChat",
+        "title": "Clear Chat",
+        "category": "Coding Assistant",
+        "icon": "$(clear-all)"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "command": "codingAssistant.explainSelection",
+          "when": "editorHasSelection",
+          "group": "codingAssistant@1"
+        },
+        {
+          "command": "codingAssistant.fixSelection",
+          "when": "editorHasSelection",
+          "group": "codingAssistant@2"
+        },
+        {
+          "command": "codingAssistant.askAboutFile",
+          "group": "codingAssistant@3"
+        }
+      ],
+      "view/title": [
+        {
+          "command": "codingAssistant.clearChat",
+          "when": "view == codingAssistant.chat",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Personal Coding Assistant",
+      "properties": {
+        "codingAssistant.serverUrl": {
+          "type": "string",
+          "default": "http://localhost:3000",
+          "description": "Base URL of the coding-assistant Next.js server (run `npm run dev` in the project)."
+        },
+        "codingAssistant.sendActiveFile": {
+          "type": "boolean",
+          "default": true,
+          "description": "Include the open file (or your selection) as context with each question."
+        },
+        "codingAssistant.requestTimeoutSeconds": {
+          "type": "number",
+          "default": 180,
+          "description": "How long to wait for the local model before giving up."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "package": "npx @vscode/vsce package --allow-missing-repository --skip-license"
+  },
+  "devDependencies": {
+    "@types/node": "^20",
+    "@types/vscode": "^1.90.0",
+    "typescript": "^5"
+  }
+}

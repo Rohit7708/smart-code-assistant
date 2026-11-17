@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Separate VS Code extension package with its own build.
+    "vscode-extension/**",
   ]),
 ]);
 

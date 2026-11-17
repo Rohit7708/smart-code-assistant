@@ -1,9 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
+import fs from "fs";
+import path from "path";
 import { buildRepositoryIndex, getRelevantRepoContext } from "@/lib/repo-context";
+
+type ActiveFile = {
+  path?: string;
+  language?: string;
+  content?: string;
+  selection?: string;
+};
+
+// The VS Code extension sends the folder the user has open. Fall back to this
+// app's own directory when the request doesn't name a valid folder.
+function resolveRepoRoot(workspaceRoot: unknown) {
+  if (
+    typeof workspaceRoot === "string" &&
+    path.isAbsolute(workspaceRoot) &&
+    fs.existsSync(workspaceRoot) &&
+    fs.statSync(workspaceRoot).isDirectory()
+  ) {
+    return { repoRoot: workspaceRoot, fromEditor: true };
+  }
+  return { repoRoot: process.cwd(), fromEditor: false };
+}
+
+function buildEditorPrompt(activeFile: ActiveFile | undefined) {
+  if (!activeFile?.path) {
+    return "";
+  }
+  const language = activeFile.language || "";
+  const parts = [`The user is currently editing: ${activeFile.path}`];
+  if (activeFile.selection) {
+    parts.push(`Selected code:\n\`\`\`${language}\n${activeFile.selection.slice(0, 8000)}\n\`\`\``);
+  } else if (activeFile.content) {
+    parts.push(`File contents:\n\`\`\`${language}\n${activeFile.content.slice(0, 8000)}\n\`\`\``);
+  }
+  return parts.join("\n\n");
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { messages } = await request.json();
+    const { messages, workspaceRoot, activeFile } = await request.json();
 
     const ollamaHost = process.env.OLLAMA_HOST || "http://127.0.0.1:11434";
     const model = process.env.OLLAMA_MODEL || "llama3.2";
@@ -12,9 +49,11 @@ export async function POST(request: NextRequest) {
       .reverse()
       .find((message: { role: string; content: string }) => message.role === "user")?.content || "";
 
-    const repoRoot = process.cwd();
+    const { repoRoot, fromEditor } = resolveRepoRoot(workspaceRoot);
     const toolCalls = [] as Array<{ action: string; targetPath: string }>;
-    const repoChunks = buildRepositoryIndex(repoRoot, 80);
+    // Don't write a .cache folder into the user's own project.
+    const repoChunks = buildRepositoryIndex(repoRoot, 80, { persist: !fromEditor });
+    const editorPrompt = buildEditorPrompt(activeFile);
     const relevantContext = getRelevantRepoContext(lastUserMessage, repoChunks, 5);
 
     const toolPrompt = [] as string[];
@@ -64,6 +103,9 @@ ${relevantContext
           },
           ...(contextPrompt
             ? [{ role: "system", content: contextPrompt }]
+            : []),
+          ...(editorPrompt
+            ? [{ role: "system", content: editorPrompt }]
             : []),
           ...(toolPrompt.length
             ? [{ role: "system", content: toolPrompt.join("\n") }]
